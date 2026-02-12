@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ad Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f14;
+            --text: #f5f5f5;
+            --accent: #d4a5a5;
+        }
+        body, html {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        
+        #star-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .fade-overlay {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.8s ease-in-out;
+        }
+
+        .step-section {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 1.8s ease-in-out, transform 1.8s ease-out;
+            transform: translateY(15px);
+            z-index: 10;
+        }
+
+        .step-section.active {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        #final.step-section {
+            transition: opacity 3.5s ease-in-out, transform 3.5s ease-out;
+        }
+
+        .max-w-prose {
+            max-width: 700px;
+            transition: transform 0.4s ease-out;
+        }
+
+        .btn-ghost {
+            color: var(--text);
+            opacity: 0.3;
+            padding: 0.75rem 2.5rem;
+            background: transparent;
+            transition: all 0.8s ease;
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-ghost:hover {
+            opacity: 1;
+            color: var(--accent);
+            text-shadow: 0 0 15px rgba(212, 165, 165, 0.5);
+        }
+
+        #trigger {
+            cursor: pointer;
+            transition: all 0.5s ease;
+        }
+        #trigger:hover {
+            color: var(--accent);
+            text-shadow: 0 0 12px rgba(212, 165, 165, 0.4);
+            opacity: 1;
+        }
+
+        .reveal-up {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 3.5s ease, transform 3.5s ease;
+        }
+        .reveal-up.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { text-shadow: 0 0 10px rgba(212, 165, 165, 0.1); transform: scale(1); }
+            50% { text-shadow: 0 0 30px rgba(212, 165, 165, 0.4); transform: scale(1.02); }
+        }
+
+        .heartbeat-text {
+            animation: heartbeat 7s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        #mute-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 200;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            opacity: 0.2;
+            transition: opacity 0.5s;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+        }
+        #mute-btn:hover { opacity: 0.7; }
+
+        .hidden-node { display: none !important; }
+
+        .typewriter-cursor::after {
+            content: '|';
+            animation: blink 1.3s step-end infinite;
+            margin-left: 6px;
+            color: var(--accent);
+        }
+
+        @keyframes blink {
+            from, to { opacity: 0; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+    <div id="fade-overlay" class="fade-overlay"></div>
+    
+    <audio id="bg-music" loop>
+        <source src="canon_in_d.mp3" type="audio/mpeg">
+    </audio>
+
+    <button id="mute-btn" onclick="toggleMute()" class="hidden-node">MUTE</button>
+
+    <div id="fake-page" class="step-section active">
+        <div class="max-w-prose w-full text-left pl-4 md:pl-0">
+            <header class="space-y-2 mb-12">
+                <h1 class="text-2xl opacity-80">Ad Notes</h1>
+                <p class="text-sm italic opacity-40">“rough notes — nothing important”</p>
+            </header>
+            
+            <div class="space-y-4 font-mono text-sm opacity-60">
+                <p>lighting good</p>
+                <p>timing good</p>
+                <p>transitions smooth</p>
+                <p id="trigger">frame entry — perfect</p>
+            </div>
+        </div>
+    </div>
+
+    <main id="experience-wrap" class="hidden-node">
+        <section id="intro" class="step-section">
+            <div class="max-w-prose">
+                <p class="text-xl italic mb-12 leading-relaxed">
+                    “This page wasn’t meant to be opened.<br>
+                    But now that you’re here… maybe you were always meant to be.”
+                </p>
+                <button onclick="nextStep('intro', 'origin')" class="btn-ghost">continue</button>
+            </div>
+        </section>
+
+        <section id="origin" class="step-section">
+            <div class="max-w-prose">
+                <h2 class="text-4xl mb-6">It started with a frame.</h2>
+                <p class="text-lg opacity-80 leading-relaxed">
+                    Not a conversation. Not a moment. Just a single scene on a screen where you walked in — and somehow walked into my thoughts too. Funny how something so small can quietly change something inside someone.
+                </p>
+                <button onclick="nextStep('origin', 'week')" class="btn-ghost">Next</button>
+            </div>
+        </section>
+
+        <section id="week" class="step-section">
+            <div class="max-w-prose">
+                <h2 class="text-4xl mb-6">They say a week is nothing.</h2>
+                <p class="text-lg opacity-80 leading-relaxed">
+                    But a week is enough time to notice someone’s energy, someone’s laughter, someone’s presence that doesn’t ask for attention — yet somehow keeps it.
+                </p>
+                <button onclick="nextStep('week', 'detail')" class="btn-ghost">Next</button>
+            </div>
+        </section>
+
+        <section id="detail" class="step-section">
+            <div class="max-w-prose">
+                <h2 class="text-4xl mb-6">The detail I remember</h2>
+                <p class="text-lg opacity-80 leading-relaxed">
+                    Most people probably notice your smile first. I noticed your eyes. Especially that moment when you looked at me. You probably forgot it seconds later. I didn’t.
+                </p>
+                <button onclick="nextStep('detail', 'realization')" class="btn-ghost">Next</button>
+            </div>
+        </section>
+
+        <section id="realization" class="step-section">
+            <div class="max-w-prose">
+                <h2 class="text-4xl mb-6">Something I realized</h2>
+                <p class="text-lg opacity-80 leading-relaxed">
+                    Talking to you somehow feels natural. Not forced. Not planned. Just natural. And I started realizing I was looking forward to those conversations more than I should.
+                </p>
+                <button onclick="nextStep('realization', 'final')" class="btn-ghost">Next</button>
+            </div>
+        </section>
+
+        <section id="final" class="step-section">
+            <div class="max-w-prose" id="final-container">
+                <p class="reveal-up text-xl mb-4" id="line1">So here is the truth I never planned to say.</p>
+                <h2 class="text-6xl mb-4 heartbeat-text" style="color: #d4a5a5;" id="line2"></h2>
+                <p class="reveal-up text-lg italic opacity-60 mb-12" id="line3">Not loudly. Not suddenly. Just honestly.</p>
+                
+                <div id="final-actions" class="reveal-up flex flex-col md:flex-row gap-4 justify-center">
+                    <button onclick="respond('YES')" class="btn-ghost">I want to see where this goes</button>
+                    <button onclick="respond('TIME')" class="btn-ghost">I need time</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        let warpSpeed = 0.2;
+        let targetWarpSpeed = 0.2;
+        let shootingStars = [];
+
+        function initStars() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            stars = [];
+            for (let i = 0; i < 150; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 1.5,
+                    speed: Math.random() * 0.4 + 0.1,
+                    opacity: Math.random()
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            warpSpeed += (targetWarpSpeed - warpSpeed) * 0.05;
+
+            stars.forEach(s => {
+                ctx.globalAlpha = s.opacity;
+                ctx.fillStyle = "#f5f5f5";
+                if (warpSpeed > 1) {
+                    ctx.beginPath();
+                    ctx.moveTo(s.x, s.y);
+                    ctx.lineTo(s.x, s.y + (warpSpeed * 8));
+                    ctx.strokeStyle = "#f5f5f5";
+                    ctx.lineWidth = s.size;
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                s.y -= s.speed * (warpSpeed * 5);
+                if (s.y < -20) s.y = canvas.height + 20;
+            });
+
+            shootingStars.forEach((ss, index) => {
+                ctx.globalAlpha = ss.opacity;
+                let gradient = ctx.createLinearGradient(ss.x, ss.y, ss.x + ss.len, ss.y - (ss.len * 0.5));
+                gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+                gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+                
+                ctx.beginPath();
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 1.5;
+                ctx.moveTo(ss.x, ss.y);
+                ctx.lineTo(ss.x + ss.len, ss.y - (ss.len * 0.5));
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.fillStyle = "#fff";
+                ctx.arc(ss.x, ss.y, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                ss.x += ss.vx;
+                ss.y += ss.vy;
+                ss.opacity -= 0.004;
+                if (ss.opacity <= 0) shootingStars.splice(index, 1);
+            });
+
+            requestAnimationFrame(drawStars);
+        }
+
+        function triggerShootingStar() {
+            shootingStars.push({
+                x: Math.random() * (canvas.width * 0.4) + (canvas.width * 0.5),
+                y: -50,
+                len: 50,
+                vx: -3.5,
+                vy: 2.2,
+                opacity: 1
+            });
+        }
+
+        function toggleMute() {
+            const music = document.getElementById('bg-music');
+            const btn = document.getElementById('mute-btn');
+            music.muted = !music.muted;
+            btn.innerText = music.muted ? 'UNMUTE' : 'MUTE';
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.pageX) / 60;
+            const y = (window.innerHeight / 2 - e.pageY) / 60;
+            const activeContent = document.querySelector('.step-section.active .max-w-prose');
+            if (activeContent) activeContent.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        window.addEventListener('resize', initStars);
+        initStars();
+        drawStars();
+
+        const trigger = document.getElementById('trigger');
+        const overlay = document.getElementById('fade-overlay');
+        const music = document.getElementById('bg-music');
+
+        trigger.addEventListener('click', () => {
+            overlay.style.opacity = '1';
+            targetWarpSpeed = 6;
+            music.volume = 0;
+            music.play();
+            let vol = 0;
+            const fadeIn = setInterval(() => {
+                if (vol < 0.4) { vol += 0.02; music.volume = vol; }
+                else clearInterval(fadeIn);
+            }, 300);
+
+            setTimeout(() => {
+                document.getElementById('fake-page').classList.add('hidden-node');
+                document.getElementById('experience-wrap').classList.remove('hidden-node');
+                document.getElementById('mute-btn').classList.remove('hidden-node');
+                document.getElementById('intro').classList.add('active');
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    targetWarpSpeed = 0.2;
+                }, 1200);
+            }, 1800);
+        });
+
+        function nextStep(curr, next) {
+            document.getElementById(curr).classList.remove('active');
+            let waitTime = (next === 'final') ? 3000 : 1500;
+            setTimeout(() => {
+                document.getElementById(next).classList.add('active');
+                if (next === 'final') animateFinal();
+            }, waitTime);
+        }
+
+        async function typeWriter(text, elementId, speed = 500) {
+            const el = document.getElementById(elementId);
+            el.classList.add('typewriter-cursor');
+            for (let i = 0; i < text.length; i++) {
+                el.innerHTML += text.charAt(i);
+                await new Promise(r => setTimeout(r, speed));
+            }
+            el.classList.remove('typewriter-cursor');
+        }
+
+        function animateFinal() {
+            setTimeout(() => document.getElementById('line1').classList.add('show'), 3000);
+            
+            setTimeout(async () => {
+                triggerShootingStar(); 
+                setTimeout(() => triggerShootingStar(), 5000); 
+                
+                await typeWriter("I love you, Su.", "line2", 500); 
+                
+                setTimeout(() => {
+                    document.getElementById('line3').classList.add('show');
+                    setTimeout(() => {
+                        document.getElementById('final-actions').classList.add('show');
+                    }, 4000); 
+                }, 3000);
+            }, 8000);
+        }
+
+        function respond(type) {
+            const container = document.getElementById('final-container');
+            const music = document.getElementById('bg-music');
+            
+            let vol = music.volume;
+            const fadeOut = setInterval(() => {
+                if (vol > 0.01) {
+                    vol -= 0.01;
+                    music.volume = vol;
+                } else {
+                    music.pause();
+                    clearInterval(fadeOut);
+                }
+            }, 100);
+
+            container.style.transition = 'all 2s ease-in-out';
+            container.style.opacity = '0';
+            container.style.filter = 'blur(10px)';
+            container.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+                container.innerHTML = type === 'YES' 
+                    ? '<h2 class="text-3xl italic" style="color:var(--accent); line-height: 1.6;">Then I’m really glad<br>this page found you.</h2>'
+                    : '<h2 class="text-3xl italic" style="color:var(--accent); line-height: 1.6;">Take all the time you need.<br>Some feelings are worth waiting for.</h2>';
+                
+                container.style.filter = 'blur(20px)';
+                container.style.transform = 'translateY(20px)';
+                
+                void container.offsetWidth;
+
+                container.style.opacity = '1';
+                container.style.filter = 'blur(0px)';
+                container.style.transform = 'translateY(0)';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
