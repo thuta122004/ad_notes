@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frames of Us</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f14;
+            --text: #f5f5f5;
+            --accent: #d4a5a5;
+            --frame-border: rgba(212, 165, 165, 0.15);
+        }
+
+        body, html {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+
+        #star-canvas {
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .fade-overlay {
+            position: fixed;
+            inset: 0;
+            background: black;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1.8s ease-in-out;
+        }
+
+        #mute-btn {
+            position: fixed;
+            bottom: 2rem; right: 2rem;
+            z-index: 200;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            opacity: 0.3;
+            background: none;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            color: var(--text);
+            cursor: pointer;
+            display: none;
+        }
+
+        .btn-ghost {
+            color: var(--text);
+            opacity: 0.6;
+            padding: 0.75rem 2.5rem;
+            background: transparent;
+            transition: all 0.8s ease;
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+        }
+        .btn-ghost:hover {
+            opacity: 1;
+            color: var(--accent);
+            border-color: var(--accent);
+            text-shadow: 0 0 15px rgba(212, 165, 165, 0.5);
+        }
+
+        #main-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        #start-screen {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            flex-direction: column;
+            opacity: 1;
+            transition: opacity 1s ease;
+        }
+
+        #film-strip {
+            display: none;
+            width: 100%;
+        }
+
+        .memory-frame {
+            min-height: 100vh;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10vh 1rem;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 2s ease, transform 2s ease;
+        }
+
+        .memory-frame.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .photo-container {
+            border: 1px solid var(--frame-border);
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
+            max-width: 600px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .photobooth-img {
+            max-height: 70vh;
+            width: auto;
+            border: 6px solid #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .memory-photo {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+        }
+
+        .photo-caption {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            color: var(--accent);
+            font-size: 1.1rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .date-stamp {
+            font-size: 0.75rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.4;
+            margin-bottom: -0.5rem;
+        }
+
+        .heartbeat-text {
+            animation: heartbeat 6s infinite ease-in-out;
+            display: inline-block;
+        }
+        @keyframes heartbeat {
+            0%, 100% { text-shadow: 0 0 10px rgba(212, 165, 165, 0.2); transform: scale(1); }
+            50% { text-shadow: 0 0 30px rgba(212, 165, 165, 0.5); transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="star-canvas"></canvas>
+    <div id="fade-overlay" class="fade-overlay"></div>
+    
+    <audio id="bg-music" loop><source src="canon_in_d.mp3" type="audio/mpeg"></audio>
+    <button id="mute-btn" onclick="toggleMute()">MUTE</button>
+
+    <main id="main-wrapper">
+        
+        <section id="start-screen">
+            <div class="max-w-prose p-6">
+                <span class="date-stamp">14 Feb 2026</span>
+                <h1 class="text-3xl md:text-5xl mb-8 opacity-80 mt-4">Exactly one month ago...</h1>
+                <p class="text-xl italic mb-12 leading-relaxed opacity-50">
+                    “A single frame changed,<br>and so did my entire world.”
+                </p>
+                <button onclick="startExperience()" class="btn-ghost">Recall the memories</button>
+            </div>
+        </section>
+
+        <section id="film-strip">
+            
+            <div class="memory-frame">
+                <div class="photo-container p-12">
+                    <span class="date-stamp">20 Feb 2026</span>
+                    <h3 class="text-xs tracking-[0.4em] uppercase opacity-40 mb-4">The Opening Scene</h3>
+                    <p class="photo-caption text-lg">
+                       The first day was so active and new, yet I felt a strange sense of comfort. Even with my heart racing, being with you felt safe. It was the moment I realized I wanted a lifetime of "next frames" with you, Honey.
+                    </p>
+                </div>
+            </div>
+
+            <div class="memory-frame">
+                <div class="photo-container">
+                    <span class="date-stamp">27 Feb 2026</span>
+                    <img src="photobooth.jpg" alt="Photo Booth" class="photobooth-img">
+                    <p class="photo-caption">
+                        The Photo Booth strip. That moment, and the soft copy of our first kiss... a series of frames I’ll keep forever, Honey.
+                    </p>
+                </div>
+            </div>
+
+            <div class="memory-frame">
+                <div class="photo-container">
+                    <span class="date-stamp">02 Mar 2026</span>
+                    <img src="volunteering.jpg" alt="Graduation Memo" class="memory-photo">
+                    <p class="photo-caption">
+                        Volunteering at the graduation together. Even in the middle of all the work, having you by my side made everything feel lighter.
+                    </p>
+                </div>
+            </div>
+
+            <div class="memory-frame">
+                <div class="photo-container">
+                    <span class="date-stamp">13 Mar 2026</span>
+                    <img src="bouquet.jpg" alt="First Bouquet" class="memory-photo">
+                    <p class="photo-caption">
+                        Our most recent date—your first bouquet from me. It was a beautiful day, but your smile was the only thing I was really focused on.
+                    </p>
+                </div>
+            </div>
+
+            <div class="memory-frame">
+                <div class="max-w-prose text-center flex flex-col items-center gap-10 px-6">
+                    <p class="text-xl opacity-60 italic">One month of us.</p>
+                    <h2 class="text-5xl md:text-7xl heartbeat-text" style="color: var(--accent);">Happy Monthsary, Honey.</h2>
+                    <p class="text-lg opacity-70 leading-relaxed">
+                        I'm so glad this page found us.
+                    </p>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('fade-overlay');
+        const music = document.getElementById('bg-music');
+        let stars = [];
+        let warpSpeed = 0.2;
+        let targetWarpSpeed = 0.2;
+
+        function initStars() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            stars = [];
+            for (let i = 0; i < 150; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 1.5, speed: Math.random() * 0.4 + 0.1, opacity: Math.random() });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            warpSpeed += (targetWarpSpeed - warpSpeed) * 0.05;
+            stars.forEach(s => {
+                ctx.globalAlpha = s.opacity; ctx.fillStyle = "#f5f5f5";
+                if (warpSpeed > 1) {
+                    ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x, s.y + (warpSpeed * 8));
+                    ctx.strokeStyle = "#f5f5f5"; ctx.lineWidth = s.size; ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill();
+                }
+                s.y -= s.speed * (warpSpeed * 5);
+                if (s.y < -20) s.y = canvas.height + 20;
+            });
+            requestAnimationFrame(drawStars);
+        }
+
+        function toggleMute() {
+            music.muted = !music.muted;
+            document.getElementById('mute-btn').innerText = music.muted ? 'UNMUTE' : 'MUTE';
+        }
+
+        function startExperience() {
+            overlay.style.opacity = '1';
+            targetWarpSpeed = 6;
+            
+            music.volume = 0.4;
+            music.play().catch(e => console.log("Audio play blocked"));
+
+            setTimeout(() => {
+                document.getElementById('start-screen').style.display = 'none';
+                const filmStrip = document.getElementById('film-strip');
+                filmStrip.style.display = 'block';
+                document.getElementById('mute-btn').style.display = 'block';
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('in-view');
+                        }
+                    });
+                }, { threshold: 0.1 });
+
+                document.querySelectorAll('.memory-frame').forEach(f => observer.observe(f));
+
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    targetWarpSpeed = 0.2;
+                    window.scrollTo(0, 0);
+                }, 500);
+
+            }, 1800);
+        }
+
+        window.addEventListener('resize', initStars);
+        initStars(); drawStars();
+    </script>
+</body>
+</html>
